@@ -21,6 +21,9 @@ public class ConnectionInfo {
         this.processName = processName;
     }
 
+	public void setProcessName(String processName) {
+		this.processName = processName; }
+		
     public String getProtocol() { return protocol; }
     public String getLocalAddress() { return localAddress; }
     public String getForeignAddress() { return foreignAddress; }
