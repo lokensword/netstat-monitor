@@ -1,9 +1,22 @@
+# Gradle
 .gradle/
-.idea/
 build/
-gradle/
+!gradlew
+!gradlew.bat
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
+# IDE
+.idea/
 *.iml
+*.iws
+
+# Compiled Java
 *.class
 
+# Config
 app.properties
+
+# Logs and temp files
+*.log
+*.tmp

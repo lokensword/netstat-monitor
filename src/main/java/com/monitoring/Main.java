@@ -6,33 +6,35 @@ import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
-        try {
-            // Файл не найден - программа упадет (что логично, конфиг обязателен по заданию)
-            AppConfig config = new AppConfig("app.properties");
-            int portToCheck = config.getPortToCheck();
-            System.out.println("Config loaded. Checking port: " + portToCheck);
+    try {
+        // Загрузка конфигурации
+        AppConfig config = new AppConfig("app.properties");
+        int portToCheck = config.getPortToCheck();
 
-            // Получение данных
-            CommandExecutor executor = new CommandExecutor();
-            List<String> rawOutput = executor.executeNetstat();
+        // Выполнение netstat
+        CommandExecutor executor = new CommandExecutor();
+        List<String> rawOutput = executor.executeNetstat();
 
-            // Парсинг
-            NetstatParser parser = new NetstatParser();
-            List<ConnectionInfo> connections = parser.parse(rawOutput);
+        // Парсинг
+        NetstatParser parser = new NetstatParser();
+        List<ConnectionInfo> connections = parser.parse(rawOutput);
 
-            Map<String, String> pidToProcess = ProcessNameResolver.resolveProcessNames(connections);
+        // Разрешение имён процессов
+        Map<String, String> pidToProcess = ProcessNameResolver.resolveProcessNames(connections);
+        for (ConnectionInfo info : connections) {
+            if (!"UNKNOWN".equals(info.getPid())) {
+                String resolvedName = pidToProcess.get(info.getPid());
+                if (resolvedName != null) {
+                    info.setProcessName(resolvedName);
+                }
+            }
+        }
 
-			// Обновление ConnectionInfo для Windows
-			for (ConnectionInfo info : connections) {
-				if (!"UNKNOWN".equals(info.getPid())) {
-					String resolvedName = pidToProcess.get(info.getPid());
-					if (resolvedName != null) {
-						info.setProcessName(resolvedName);
-					}
-				}
-			}
+        // === Чтение режима вывода ===
+		String outputMode = config.getProperty("output.mode", "VERBOSE").trim().toUpperCase();
 
-			// Задание 1: LISTEN
+		if ("VERBOSE".equals(outputMode)) {
+			// --- Listening Ports ---
 			System.out.println("\n--- Listening Ports ---");
 			boolean hasListening = false;
 			for (ConnectionInfo info : connections) {
@@ -47,7 +49,7 @@ public class Main {
 				System.out.println("No listening ports found.");
 			}
 
-			// Задание 2: ESTABLISHED
+			// --- External Connections ---
 			System.out.println("\n--- External Connections ---");
 			boolean hasExternal = false;
 			for (ConnectionInfo info : connections) {
@@ -59,27 +61,38 @@ public class Main {
 			}
 			if (!hasExternal) {
 				System.out.println("No external connections found.");
-
-			// Задание 3: Проверка порта
-			System.out.println("\n--- Port " + portToCheck + " Check ---");
-			boolean isBusy = false;
-			for (ConnectionInfo info : connections) {
-				int port = AddressUtils.extractPort(info.getLocalAddress());
-				if (port == portToCheck) {
-					System.out.printf("Port %d is in use by PID: %s (%s)%n", 
-						portToCheck, info.getPid(), info.getProcessName());
-					isBusy = true;
-					break; // достаточно одного совпадения
-				}
 			}
+		}
+
+		// --- Port Check (всегда выполняется, но вывод зависит от режима) ---
+		System.out.println("\n--- Port " + portToCheck + " Check ---");
+		boolean isBusy = false;
+		for (ConnectionInfo info : connections) {
+			int port = AddressUtils.extractPort(info.getLocalAddress());
+			if (port == portToCheck) {
+				System.out.printf("Port %d is in use by PID: %s (%s)%n", 
+					portToCheck, info.getPid(), info.getProcessName());
+				isBusy = true;
+				break;
+			}
+		}
+
+		// В режиме SUMMARY выводим только если порт занят
+		if ("SUMMARY".equals(outputMode)) {
+			if (!isBusy) {
+				// Нет проблем → ничего не выводим (или минимальное сообщение по желанию)
+				System.out.println("No issues detected.");
+			}
+		} else {
+			// VERBOSE: всегда показываем статус порта
 			if (!isBusy) {
 				System.out.println("Port " + portToCheck + " is not in use.");
-			};
 			}
-		
-        } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-        }
+		}
+
+    } catch (IOException e) {
+        System.err.println("Error: " + e.getMessage());
+        e.printStackTrace();
     }
+}
 }
