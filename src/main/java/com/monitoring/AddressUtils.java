@@ -1,24 +1,25 @@
 package com.monitoring;
 
 /**
- * Класс для работы с сетевыми адресами
+ * Утилиты для работы с сетевыми адресами
+ * Поддерживает извлечение порта из IPv4 и IPv6 адресов
  */
 public class AddressUtils {
 
     /**
-     * Извлекает номер порта из строки адреса
-     * @param address строка вида "192.168.1.1:8080" или "[::1]:8080"
-     * @return номер порта или -1, если не удалось распарсить
+     * Извлечение номера порта из строки адреса
+     * Обрабатывает форматы вида "192.168.1.1:8080" и "[::1]:8080"
+     *
+     * @param address строка с адресом и портом
+     * @return номер порта или -1 при ошибке парсинга
      */
     public static int extractPort(String address) {
         if (address == null || address.isEmpty()) return -1;
 
         int portStart;
         if (address.startsWith("[") && address.contains("]:")) {
-            // IPv6 - поиск после ]
-            portStart = address.lastIndexOf(']') + 2; // +2: "]:" → начало порта
+            portStart = address.lastIndexOf(']') + 2;
         } else {
-            // IPv4 - после :
             portStart = address.lastIndexOf(':') + 1;
         }
 

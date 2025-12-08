@@ -4,12 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
- * Класс для разрешения имени процесса по PID на разных ОС
- * На Linux имена уже доступны из netstat
- * На Windows требуется дополнительный вызов tasklist
+ * Разрешение имени процесса по PID
+ * На Linux использует данные из netstat
+ * На Windows вызывает tasklist для каждого PID
  */
 public class ProcessNameResolver {
 
@@ -17,16 +16,13 @@ public class ProcessNameResolver {
     private static final boolean IS_WINDOWS = OS.contains("win");
 
     /**
-     * Возвращает отображение PID - имя процесса
-     * На Windows выполняет tasklist для всех уникальных PID
-     * На Linux использует уже существующие имена из ConnectionInfo
+     * Построение карты PID → имя процесса
      *
-     * @param connections список соединений после парсинга netstat
-     * @return мапа PID (строка) -> имя процесса (без .exe для windows)
+     * @param connections список соединений после парсинга
+     * @return карта соответствий PID и имён процессов
      */
     public static Map<String, String> resolveProcessNames(List<ConnectionInfo> connections) {
         if (!IS_WINDOWS) {
-            // Linux: имена уже есть в объектах
             Map<String, String> map = new HashMap<>();
             for (ConnectionInfo c : connections) {
                 if (!"UNKNOWN".equals(c.getPid()) && !"Unknown".equals(c.getProcessName())) {
@@ -36,7 +32,6 @@ public class ProcessNameResolver {
             return map;
         }
 
-        // Windows - собрать уникальные PID
         Set<String> pids = new HashSet<>();
         for (ConnectionInfo c : connections) {
             if (!"UNKNOWN".equals(c.getPid())) {
@@ -46,42 +41,41 @@ public class ProcessNameResolver {
 
         return getProcessNamesForPidsWindows(pids);
     }
-	
-	
-	private static Map<String, String> getProcessNamesForPidsWindows(Set<String> pids) {
-		Map<String, String> result = new HashMap<>();
-		if (pids.isEmpty()) return result;
 
-		for (String pid : pids) {
-			String name = getProcessNameForPid(pid);
-			result.put(pid, name != null ? name : "N/A");
-		}
+    private static Map<String, String> getProcessNamesForPidsWindows(Set<String> pids) {
+        Map<String, String> result = new HashMap<>();
+        if (pids.isEmpty()) return result;
 
-		return result;
-	}
+        for (String pid : pids) {
+            String name = getProcessNameForPid(pid);
+            result.put(pid, name != null ? name : "N/A");
+        }
 
-	private static String getProcessNameForPid(String pid) {
-		try {
-			ProcessBuilder pb = new ProcessBuilder("tasklist", "/NH", "/FO", "CSV", "/FI", "PID eq " + pid);
-			pb.redirectErrorStream(true);
-			Process process = pb.start();
+        return result;
+    }
 
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-				String line = reader.readLine(); // только первая строка - нужный процесс
-				if (line != null && line.startsWith("\"")) {
-					String[] parts = parseCsvLine(line);
-					if (parts.length >= 1) {
-						return parts[0].replaceAll("\\.exe$", "");
-					}
-				}
-			}
-		} catch (IOException e) {
-			// Ошибка - возврат null
-		}
-		return null;
-	}
+    private static String getProcessNameForPid(String pid) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("tasklist", "/NH", "/FO", "CSV", "/FI", "PID eq " + pid);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
 
-    // CSV-парсер для кавычек
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line = reader.readLine();
+                if (line != null && line.startsWith("\"")) {
+                    String[] parts = parseCsvLine(line);
+                    if (parts.length >= 1) {
+                        return parts[0].replaceAll("\\.exe$", "");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            // игнор ошибки вызова tasklist
+        }
+        return null;
+    }
+
+    // Парсинг CSV без экранирования
     private static String[] parseCsvLine(String line) {
         List<String> fields = new ArrayList<>();
         boolean inQuotes = false;
