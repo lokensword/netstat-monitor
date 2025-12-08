@@ -4,63 +4,62 @@
 Поддерживает Windows и Linux. Автоматически определяет ОС, выполняет соответствующую команду, парсит вывод и генерирует отчёт.
 
 ## Технологии
-- Java 17
-- Gradle (сборка и управление зависимостями)
-- JUnit 5 (тестирование)
+    - Java 17
+    - Gradle (сборка и управление зависимостями)
+    - JUnit 5 (тестирование)
 
 ## Пример работы
 
 ### Вход (автоматически получается из `netstat`)
 
-Proto  Local Address      Foreign Address    State       PID
-TCP    0.0.0.0:135        0.0.0.0:0          LISTENING   1216
-TCP    192.168.0.141:49665 20.189.173.15:443  ESTABLISHED 784
+    Proto  Local Address      Foreign Address    State       PID
+    TCP    0.0.0.0:135        0.0.0.0:0          LISTENING   1216
+    TCP    192.168.0.141:49665 20.189.173.15:443  ESTABLISHED 784
 
 ### Выход (stdout)
 
---- Listening Ports ---
-PID: 1216, Process: svchost, Port: 135
-
---- External Connections ---
-PID: 784, Process: firefox, Foreign: 20.189.173.15:443
-
---- Port 135 Check ---
-Port 135 is not in use.
+    --- Listening Ports ---
+    PID: 1216, Process: svchost, Port: 135
+    
+    --- External Connections ---
+    PID: 784, Process: firefox, Foreign: 20.189.173.15:443
+    
+    --- Port 135 Check ---
+    Port 135 is not in use.
 
 
 ## Сборка проекта
 
-Убедитесь, что установлены:
-- Java 17
-- JDK 17
-- Git
-- Gradle
+    Убедитесь, что установлены:
+    - Java 17
+    - JDK 17
+    - Git
+    - Gradle
+    
+    Скачайте репозиторий с помощью команды:
+    git clone https://github.com/lokensword/netstat-monitor
+    cd (укажите папку, куда вы скачали репозиторий)
 
-Скачайте репозиторий с помощью команды:
-git clone https://github.com/lokensword/netstat-monitor
-cd (укажите папку, куда вы скачали репозиторий)
+## Конфигурация
 
-Конфигурация
+    Создайте файл app.properties в корне проекта (он игнорируется в Git):
+    ### Порт для проверки занятости
+    monitor.port.check=135
 
-Создайте файл app.properties в корне проекта (он игнорируется в Git):
-### Порт для проверки занятости
-monitor.port.check=135
-
-### Режим вывода (VERBOSE (все) или SUMMARY (только проблемы))
-output.mode=VERBOSE
+    ### Режим вывода (VERBOSE (все) или SUMMARY (только проблемы))
+    output.mode=VERBOSE
 
 Учтите: app.properties обязателен для запуска. Без него приложение завершится с ошибкой.
 
-Запуск тестов
+## Запуск тестов
 
-Выполните в корне проекта:
+    Выполните в корне проекта:
+    gradlew test
 
-gradlew test
+## Запуск приложения
 
-Запуск приложения
-
-Выполните в корне проекта:
-gradlew run
+    Выполните в корне проекта:
+    gradlew run
 
 Приложение выведет три раздела или только проверит занятость порта (в зависимости от установленного параметра в app.properties):
 
