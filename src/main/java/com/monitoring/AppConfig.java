@@ -46,7 +46,7 @@ public class AppConfig {
 
     /**
      * Возвращает номер порта, указанный в свойстве {@code monitor.port.check}
-     * Если свойство отсутствует, используется значение по умолчанию — 8080
+     * Если свойство отсутствует, используется значение по умолчанию - 8080
      *
      * @return номер порта для проверки
      * @throws NumberFormatException если значение свойства не является целым числом
@@ -54,4 +54,14 @@ public class AppConfig {
     public int getPortToCheck() {
         return Integer.parseInt(getProperty("monitor.port.check", "8080"));
     }
+
+    /**
+    * Возвращает интервал обновления, значение по умолчанию - 5
+    * 
+    * @return интервал обновления	
+    * @throws NumberFormatException если значение свойства не является целым числом
+    **/
+    public int getMonitoringIntervalSeconds() {
+        return Integer.parseInt(getProperty("monitoring.interval.seconds", "5"));
+}
 }

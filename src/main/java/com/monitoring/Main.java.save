@@ -13,9 +13,9 @@ public class Main {
         String outputMode = config.getProperty("output.mode", "VERBOSE").trim().toUpperCase();
 
         // Очистка консоли зависит от ОС; для простоты используем разделитель
-        while (true) {
+       while (true) {
             // Опционально: очистка экрана (работает в большинстве терминалов)
-            System.out.print("\033[2J\033[H"); // ANSI коды выхода
+           System.out.print("\033[2J\033[H"); System.out.print("\033[2J\033[H"); // ANSI коды очистки
 
             // === Выполнение netstat ===
             CommandExecutor executor = new CommandExecutor();

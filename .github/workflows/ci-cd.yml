@@ -37,6 +37,7 @@ jobs:
         run: |
           echo "monitor.port.check=8080" > app.properties
           echo "output.mode=VERBOSE" >> app.properties
+          echo "monitoring.interval.seconds=3" >> app.properties
 
       # --- Проверка запуска ---
       - name: Run application
