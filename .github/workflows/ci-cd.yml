@@ -41,7 +41,7 @@ jobs:
 
       # --- Проверка запуска ---
       - name: Run application
-        run: ./gradlew run
+        run: timeout 30s ./gradlew run
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
