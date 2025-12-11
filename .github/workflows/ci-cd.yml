@@ -24,6 +24,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+       
+      # --- Генерация конфига для CI ---
+      - name: Create app.properties
+        run: |
+          echo "monitor.port.check=8080" > app.properties
+          echo "output.mode=VERBOSE" >> app.properties
+          echo "monitoring.interval.seconds=3" >> app.properties
 
       - name: Grant execute permission for gradlew (Linux/macOS)
         if: runner.os != 'Windows'
@@ -32,16 +39,10 @@ jobs:
       - name: Build and run tests
         run: ./gradlew build
 
-      # --- Генерация конфига для CI ---
-      - name: Create app.properties
-        run: |
-          echo "monitor.port.check=8080" > app.properties
-          echo "output.mode=VERBOSE" >> app.properties
-          echo "monitoring.interval.seconds=3" >> app.properties
-
+      
       # --- Проверка запуска ---
-      - name: Run application
-        run: timeout 30s ./gradlew run
+      - name: Run application (from JAR)
+        run: timeout 30s java -jar build/libs/*.jar 
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
