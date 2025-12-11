@@ -20,14 +20,15 @@ indent_mode=2
 [project]
 name=netstat-monitor
 base_path=/home/loken/tmp/netstat-monitor
+description=
 
 [long line marker]
 long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=1
-FILE_NAME_0=75;Java;0;EUTF-8;1;1;0;%2Fhome%2Floken%2Ftmp%2Fnetstat-monitor%2Fsrc%2Fmain%2Fjava%2Fcom%2Fmonitoring%2FMain.java;0;4
+current_page=0
+FILE_NAME_0=118;Java;0;EUTF-8;1;1;0;%2Fhome%2Floken%2Ftmp%2Fnetstat-monitor%2Fsrc%2Fmain%2Fjava%2Fcom%2Fmonitoring%2FMain.java;0;4
 FILE_NAME_1=407;Java;0;EUTF-8;1;1;0;%2Fhome%2Floken%2Ftmp%2Fnetstat-monitor%2Fsrc%2Fmain%2Fjava%2Fcom%2Fmonitoring%2FAppConfig.java;0;4
 
 [VTE]

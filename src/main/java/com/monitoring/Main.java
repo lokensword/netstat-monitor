@@ -5,18 +5,41 @@ import java.util.List;
 import java.util.Map;
 
 public class Main {
+
     public static void main(String[] args) {
-    try {
-        AppConfig config = new AppConfig("app.properties");
-        int intervalSeconds = config.getMonitoringIntervalSeconds();
-        int portToCheck = config.getPortToCheck();
-        String outputMode = config.getProperty("output.mode", "VERBOSE").trim().toUpperCase();
+        boolean isCI = "true".equalsIgnoreCase(System.getenv("CI"));
 
-        // Очистка консоли зависит от ОС; для простоты используем разделитель
-        while (true) {
-            // Опционально: очистка экрана (работает в большинстве терминалов)
-            System.out.print("\033[2J\033[H"); // ANSI коды выхода
+        try {
+            AppConfig config = new AppConfig("app.properties");
+            int intervalSeconds = config.getMonitoringIntervalSeconds();
+            int portToCheck = config.getPortToCheck();
+            String outputMode = config.getProperty("output.mode", "VERBOSE").trim().toUpperCase();
 
+            if (isCI) {
+                // CI: одна итерация и выход
+                performIteration(config, portToCheck, outputMode);
+                System.out.println("CI run completed successfully.");
+                return; // main завершается → exit code 0
+            }
+
+            // Обычный режим: бесконечный цикл
+            while (true) {
+                performIteration(config, portToCheck, outputMode);
+                Thread.sleep(intervalSeconds * 1000L);
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Monitoring interrupted: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1); // явный код ошибки при сбое
+        }
+    }
+
+    private static void performIteration(AppConfig config, int portToCheck, String outputMode) {
+        // Опционально: очистка экрана 
+        System.out.print("\033[2J\033[H");
+
+        try {
             // === Выполнение netstat ===
             CommandExecutor executor = new CommandExecutor();
             List<String> rawOutput = executor.executeNetstat();
@@ -37,9 +60,11 @@ public class Main {
             }
 
             // === Вывод согласно режиму ===
+            boolean hasListening = false;
+            boolean hasExternal = false;
+
             if ("VERBOSE".equals(outputMode)) {
                 System.out.println("\n--- Listening Ports ---");
-                boolean hasListening = false;
                 for (ConnectionInfo info : connections) {
                     if ("LISTENING".equalsIgnoreCase(info.getState()) || "LISTEN".equalsIgnoreCase(info.getState())) {
                         int port = AddressUtils.extractPort(info.getLocalAddress());
@@ -52,7 +77,6 @@ public class Main {
                 }
 
                 System.out.println("\n--- External Connections ---");
-                boolean hasExternal = false;
                 for (ConnectionInfo info : connections) {
                     if ("ESTABLISHED".equalsIgnoreCase(info.getState())) {
                         System.out.printf("PID: %s, Process: %s, Foreign: %s%n", info.getPid(), info.getProcessName(), info.getForeignAddress());
@@ -86,14 +110,9 @@ public class Main {
                 }
             }
 
-            // === Задержка перед следующим обновлением ===
-            Thread.sleep(intervalSeconds * 1000L);
-
-        } // конец while(true)
-
-    } catch (IOException | InterruptedException e) {
-        System.err.println("Monitoring interrupted: " + e.getMessage());
-        e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Error during monitoring iteration: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
-}
 }

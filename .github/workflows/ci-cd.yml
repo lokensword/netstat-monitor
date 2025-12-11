@@ -48,7 +48,7 @@ jobs:
             exit 1
           fi
           echo "Running: $JAR"
-          timeout 30s java -jar "$JAR"
+          java -jar "$JAR"
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
