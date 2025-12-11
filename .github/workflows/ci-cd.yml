@@ -24,9 +24,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-       
-      # --- Генерация конфига для CI ---
-      - name: Create app.properties
+
+      - name: Create app.properties (for runtime)
         run: |
           echo "monitor.port.check=8080" > app.properties
           echo "output.mode=VERBOSE" >> app.properties
@@ -39,10 +38,17 @@ jobs:
       - name: Build and run tests
         run: ./gradlew build
 
-      
-      # --- Проверка запуска ---
-      - name: Run application (from JAR)
-        run: timeout 30s java -jar build/libs/*.jar 
+      # --- Запуск JAR ---
+      - name: Run application from JAR
+        shell: bash 
+        run: |
+          JAR=$(find build/libs -name "*.jar" -type f | head -n1)
+          if [[ -z "$JAR" ]]; then
+            echo "ERROR: No JAR file found in build/libs/"
+            exit 1
+          fi
+          echo "Running: $JAR"
+          timeout 30s java -jar "$JAR"
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
